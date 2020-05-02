@@ -1,6 +1,7 @@
 const utils = require("utils");
 const logging = require("logging");
 const crypto = require("crypto");
+const componentRequestDeferred = require("component.request.deferred");
 const base64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/;
 
 const isBase64String = (str) => {
@@ -95,46 +96,69 @@ function SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token
     };
 }
 
-const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callback }) => {
-    const requestUrl = `${host}:${port}${path}`;
-    let session = module.exports.sessions.find(session => session.token === requestHeaders.token);
-    let encryptData = "";
-    if (session){
-        logging.write("Sending Secured Request",`using existing session ${session.id} for ${requestUrl}`);
-        logging.write("Sending Secured Request",`encrypting data to send to ${requestUrl}`);
-        encryptData = session.encryptData({ encryptionkey: requestHeaders.encryptionkey, data });
-        requestHeaders.token = session.token;
-        requestHeaders.encryptionkey = session.getEncryptionKey();
-    } else if (requestHeaders.username && requestHeaders.passphrase) {
-        const { hashedPassphrase, salt } = hashPassphrase(requestHeaders.passphrase);
-        session = new SecureSession({
-            username: requestHeaders.username, 
-            hashedPassphrase, 
-            hashedPassphraseSalt: salt, 
-            token: requestHeaders.token, 
-            fromhost: requestHeaders.fromhost, 
-            fromport: requestHeaders.fromport
-        });
-        module.exports.sessions.push(session);
-        encryptData = data;
-        logging.write("Sending Secured Request",`creating new session ${session.id} for ${requestUrl}`);
-        requestHeaders.token = session.token;
-        requestHeaders.encryptionkey = session.getEncryptionKey();
-    }
-    const results = await callback({ requestHeaders, data: encryptData });
-    if (session && results.statusCode === 200){
-        logging.write("Sending Secured Request",`decrypting data received from ${requestUrl}`);
-        if (isBase64String(results.data)===true){
-            results.data = session.decryptData({ data: results.data });
-        } else {
-            logging.write("Sending Secured Request",`decryption failed, data received from ${requestUrl} is not encrypted.`);
-        }
-    }
-    return results;
-};
-
 module.exports = { 
     sessions: [],
-    send: sendSecureRequest,
-    hashPassphrase
+    hashPassphrase,
+    send: async ({ host, port, path, method, headers, data }) => {
+        const requestUrl = `${host}:${port}${path}`;
+        const { username, passphrase, encryptionkey, token, fromhost, fromport } = headers;
+        let session = module.exports.sessions.find(session => session.token === token);
+        let encryptData = "";
+        if (session){
+            logging.write("Sending Secured Request",`using existing session ${session.id} for ${requestUrl}`);
+            logging.write("Sending Secured Request",`encrypting data to send to ${requestUrl}`);
+            encryptData = session.encryptData({ encryptionkey, data });
+            headers.token = session.token;
+            headers.encryptionkey = session.getEncryptionKey();
+        } else if (username && passphrase) {
+            const { hashedPassphrase, salt } = hashPassphrase(passphrase);
+            session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt: salt, token, fromhost, fromport });
+            module.exports.sessions.push(session);
+            encryptData = data;
+            logging.write("Sending Secured Request",`creating new session ${session.id} for ${requestUrl}`);
+            headers.token = session.token;
+            headers.encryptionkey = session.getEncryptionKey();
+        }
+        const results = await componentRequestDeferred.send({  host, port, path, method, headers, data: encryptData });
+        if (session && results.statusCode === 200){
+            logging.write("Sending Secured Request",`decrypting data received from ${requestUrl}`);
+            if (isBase64String(results.data)===true){
+                results.data = session.decryptData({ data: results.data });
+            } else {
+                logging.write("Sending Secured Request",`decryption failed, data received from ${requestUrl} is not encrypted.`);
+            }
+        }
+        return results;
+    }
 };
+
+
+
+// const sendRequest = async ({ host, port, path, method, headers, data, retryCount = 1 }) => {
+//     const requestUrl = `${host}:${port}${path}`;
+//     logging.write("Sending Request",`sending request to ${requestUrl}`);
+//     let results = await componentRequestSecure.send({ host, port, path, requestHeaders: headers, data, callback: async ({ requestHeaders, data }) => {
+//         return await httpRequest({ host, port, path, method, headers: requestHeaders, data });
+//     }});
+//     logging.write("Sending Request",`received response from ${requestUrl}`);
+//     if (results.error || results.statusCode === 202) {
+//         logging.write("Sending Request",`request was deferred or failed, retrying ${retryCount} of 3`);
+//         if (retryCount === 3){
+//             if (results.error ) {
+//                 throw results.error;
+//             }
+//             if (results.statusCode === 202){
+//                 const message = `deferred request for ${requestUrl} did not finish.`;
+//                 logging.write("Sending Request",message);
+//                 throw new Error(message);
+//             }
+//         }
+//         retryCount = retryCount + 1;
+
+//         for(const head in results.headers){
+//             headers[head] = results.headers[head];
+//         };
+//         results = await sendRequest({  host, port, path, method, headers, data, retryCount });
+//     }
+//     return results;
+// };
