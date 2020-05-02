@@ -1,0 +1,27 @@
+{
+  "name": "component.request.secure",
+  "version": "1.0.0",
+  "description": "",
+  "main": "component.request.secure.js",
+  "engines": {
+    "node": "12.16.1",
+    "npm": "6.13.4"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/marchuanv/component.request.secure.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/marchuanv/component.request.secure/issues"
+  },
+  "homepage": "https://github.com/marchuanv/component.request.secure#readme",
+  "dependencies": {
+    "utils": "git+https://github.com/marchuanv/utils.git",
+    "logging": "git+https://github.com/marchuanv/logging.git"
+  }
+}
