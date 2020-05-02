@@ -134,11 +134,7 @@ const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callb
 };
 
 module.exports = { 
-    request: {
-        secure: { 
-            sessions: [],
-            send: sendSecureRequest,
-            hashPassphrase
-        }
-    }
+    sessions: [],
+    send: sendSecureRequest,
+    hashPassphrase
 };
