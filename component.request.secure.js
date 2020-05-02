@@ -100,8 +100,8 @@ const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callb
     let session = module.exports.sessions.find(session => session.token === requestHeaders.token);
     let encryptData = "";
     if (session){
-        logging.write("Component Request Secure",`using existing session ${session.id} for ${requestUrl}`);
-        logging.write("Component Request Secure",`encrypting data to send to ${requestUrl}`);
+        logging.write("Sending Secured Request",`using existing session ${session.id} for ${requestUrl}`);
+        logging.write("Sending Secured Request",`encrypting data to send to ${requestUrl}`);
         encryptData = session.encryptData({ encryptionkey: requestHeaders.encryptionkey, data });
         requestHeaders.token = session.token;
         requestHeaders.encryptionkey = session.getEncryptionKey();
@@ -117,17 +117,17 @@ const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callb
         });
         module.exports.sessions.push(session);
         encryptData = data;
-        logging.write("Component Request Secure",`creating new session ${session.id} for ${requestUrl}`);
+        logging.write("Sending Secured Request",`creating new session ${session.id} for ${requestUrl}`);
         requestHeaders.token = session.token;
         requestHeaders.encryptionkey = session.getEncryptionKey();
     }
     const results = await callback({ requestHeaders, data: encryptData });
     if (session && results.statusCode === 200){
-        logging.write("Component Request Secure",`decrypting data received from ${requestUrl}`);
+        logging.write("Sending Secured Request",`decrypting data received from ${requestUrl}`);
         if (isBase64String(results.data)===true){
             results.data = session.decryptData({ data: results.data });
         } else {
-            logging.write("Component Request Secure",`decryption failed, data received from ${requestUrl} is not encrypted.`);
+            logging.write("Sending Secured Request",`decryption failed, data received from ${requestUrl} is not encrypted.`);
         }
     }
     return results;
