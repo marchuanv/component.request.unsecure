@@ -97,7 +97,7 @@ function SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token
 
 const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callback }) => {
     const requestUrl = `${host}:${port}${path}`;
-    let session = module.exports.request.secure.sessions.find(session => session.token === requestHeaders.token);
+    let session = module.exports.sessions.find(session => session.token === requestHeaders.token);
     let encryptData = "";
     if (session){
         logging.write("Component Request Secure",`using existing session ${session.id} for ${requestUrl}`);
@@ -115,7 +115,7 @@ const sendSecureRequest = async ({ host, port, path, requestHeaders, data, callb
             fromhost: requestHeaders.fromhost, 
             fromport: requestHeaders.fromport
         });
-        module.exports.request.secure.sessions.push(session);
+        module.exports.sessions.push(session);
         encryptData = data;
         logging.write("Component Request Secure",`creating new session ${session.id} for ${requestUrl}`);
         requestHeaders.token = session.token;
