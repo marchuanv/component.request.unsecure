@@ -4,6 +4,8 @@ const crypto = require("crypto");
 const componentRequestDeferred = require("component.request.deferred");
 const base64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/;
 
+logging.config.add("Sending Secure Request");
+
 const isBase64String = (str) => {
     base64.lastIndex = 0;
     return base64.test(str);
@@ -105,8 +107,8 @@ module.exports = {
         let session = module.exports.sessions.find(session => session.token === token);
         let encryptData = "";
         if (session){
-            logging.write("Sending Secured Request",`using existing session ${session.id} for ${requestUrl}`);
-            logging.write("Sending Secured Request",`encrypting data to send to ${requestUrl}`);
+            logging.write("Sending Secure Request",`using existing session ${session.id} for ${requestUrl}`);
+            logging.write("Sending Secure Request",`encrypting data to send to ${requestUrl}`);
             encryptData = session.encryptData({ encryptionkey, data });
             headers.token = session.token;
             headers.encryptionkey = session.getEncryptionKey();
@@ -115,17 +117,17 @@ module.exports = {
             session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt: salt, token, fromhost, fromport });
             module.exports.sessions.push(session);
             encryptData = data;
-            logging.write("Sending Secured Request",`creating new session ${session.id} for ${requestUrl}`);
+            logging.write("Sending Secure Request",`creating new session ${session.id} for ${requestUrl}`);
             headers.token = session.token;
             headers.encryptionkey = session.getEncryptionKey();
         }
         const results = await componentRequestDeferred.send({  host, port, path, method, headers, data: encryptData });
         if (session && results.statusCode === 200){
-            logging.write("Sending Secured Request",`decrypting data received from ${requestUrl}`);
+            logging.write("Sending Secure Request",`decrypting data received from ${requestUrl}`);
             if (isBase64String(results.data)===true){
                 results.data = session.decryptData({ data: results.data });
             } else {
-                logging.write("Sending Secured Request",`decryption failed, data received from ${requestUrl} is not encrypted.`);
+                logging.write("Sending Secure Request",`decryption failed, data received from ${requestUrl} is not encrypted.`);
             }
         }
         return results;
