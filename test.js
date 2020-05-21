@@ -1,9 +1,7 @@
-const componentRequestSecure = require("./component.request.secure.js");
-const logging = require("logging");
-logging.config(["Sending Secured Request", "Re-Sending Deferred Request", "Sending Request"]);
+const requestSecure = require("./component.request.secure.js");
 (async()=>{
 
-    await componentRequestSecure.send({
+    await requestSecure.send({
         host: "localhost", 
         port: 5000, 
         path: "/test", 
@@ -18,7 +16,7 @@ logging.config(["Sending Secured Request", "Re-Sending Deferred Request", "Sendi
         data: "Hello World From Client" 
     });
 
-    await componentRequestSecure.send({
+    await requestSecure.send({
         host: "localhost", 
         port: 5000, 
         path: "/test", 

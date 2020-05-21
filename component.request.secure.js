@@ -1,7 +1,7 @@
 const utils = require("utils");
 const logging = require("logging");
 const crypto = require("crypto");
-const componentRequestDeferred = require("component.request.deferred");
+const requestDeferred = require("component.request.deferred");
 const base64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/;
 
 logging.config.add("Sending Secure Request");
@@ -121,7 +121,7 @@ module.exports = {
             headers.token = session.token;
             headers.encryptionkey = session.getEncryptionKey();
         }
-        const results = await componentRequestDeferred.send({  host, port, path, method, headers, data: encryptData });
+        const results = await requestDeferred.send({  host, port, path, method, headers, data: encryptData });
         if (session && results.statusCode === 200){
             logging.write("Sending Secure Request",`decrypting data received from ${requestUrl}`);
             if (isBase64String(results.data)===true){
@@ -133,34 +133,3 @@ module.exports = {
         return results;
     }
 };
-
-
-
-// const sendRequest = async ({ host, port, path, method, headers, data, retryCount = 1 }) => {
-//     const requestUrl = `${host}:${port}${path}`;
-//     logging.write("Sending Request",`sending request to ${requestUrl}`);
-//     let results = await componentRequestSecure.send({ host, port, path, requestHeaders: headers, data, callback: async ({ requestHeaders, data }) => {
-//         return await httpRequest({ host, port, path, method, headers: requestHeaders, data });
-//     }});
-//     logging.write("Sending Request",`received response from ${requestUrl}`);
-//     if (results.error || results.statusCode === 202) {
-//         logging.write("Sending Request",`request was deferred or failed, retrying ${retryCount} of 3`);
-//         if (retryCount === 3){
-//             if (results.error ) {
-//                 throw results.error;
-//             }
-//             if (results.statusCode === 202){
-//                 const message = `deferred request for ${requestUrl} did not finish.`;
-//                 logging.write("Sending Request",message);
-//                 throw new Error(message);
-//             }
-//         }
-//         retryCount = retryCount + 1;
-
-//         for(const head in results.headers){
-//             headers[head] = results.headers[head];
-//         };
-//         results = await sendRequest({  host, port, path, method, headers, data, retryCount });
-//     }
-//     return results;
-// };
