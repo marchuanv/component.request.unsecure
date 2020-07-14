@@ -11,24 +11,6 @@ const isBase64String = (str) => {
     return base64.test(str);
 };
 
-const genRandomString = (length) => {
-    return crypto.randomBytes(Math.ceil(length/2))
-            .toString('hex') /** convert to hexadecimal format */
-            .slice(0,length);   /** return required number of characters */
-};
-
-const sha512 = (password, salt) => {
-    var hash = crypto.createHmac('sha512', salt); /** Hashing algorithm sha512 */
-    hash.update(password);
-    var value = hash.digest('hex');
-    return { salt, hashedPassphrase: value };
-};
-
-const hashPassphrase = (userpassword, salt) => {
-    salt = salt || genRandomString(16); /** Gives us salt of length 16 */
-    return sha512(userpassword, salt);
-}
-
 const isExpiredSession = (expireDate) => {
     const currentDate = new Date();
     const expired = currentDate.getTime() > expireDate.getTime();
@@ -100,7 +82,6 @@ function SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token
 
 module.exports = { 
     sessions: [],
-    hashPassphrase,
     send: async ({ host, port, path, method, headers, data }) => {
         const requestUrl = `${host}:${port}${path}`;
         const { username, passphrase, encryptionkey, token, fromhost, fromport } = headers;
@@ -113,8 +94,8 @@ module.exports = {
             headers.token = session.token;
             headers.encryptionkey = session.getEncryptionKey();
         } else if (username && passphrase) {
-            const { hashedPassphrase, salt } = hashPassphrase(passphrase);
-            session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt: salt, token, fromhost, fromport });
+            const { hashedPassphrase, hashedPassphraseSalt } = utils.hashPassphrase(passphrase);
+            session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token, fromhost, fromport });
             module.exports.sessions.push(session);
             encryptData = data;
             logging.write("Sending Secure Request",`creating new session ${session.id} for ${requestUrl}`);
