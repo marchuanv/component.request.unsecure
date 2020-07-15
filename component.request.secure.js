@@ -44,12 +44,13 @@ const generateKeys = (passphrase) => {
     });
 };
 
-function SecureSession({ username, port, fromhost, fromport, token, hashedPassphrase, hashedPassphraseSalt }) {
+function SecureSession({ username, host, port, fromhost, fromport, token, hashedPassphrase, hashedPassphraseSalt }) {
     
     this.id = utils.generateGUID();
     this.fromhost = fromhost;
     this.fromport = fromport;
     this.username = username;
+    this.host = host;
     this.port = port;
     this.hashedPassphrase = hashedPassphrase;
     this.hashedPassphraseSalt = hashedPassphraseSalt;
@@ -77,7 +78,7 @@ module.exports = {
     sessions: [],
     send: async ({ host, port, path, method, headers, data }) => {
         const requestUrl = `${host}:${port}${path}`;
-        let session = module.exports.sessions.find(s => s.token === headers.token);
+        let session = module.exports.sessions.find(s => s.username === headers.username && s.host === host && s.port === port );
         if (session){
             logging.write("Sending Secure Request",`using existing session ${session.id} for ${requestUrl}`);
             logging.write("Sending Secure Request",`encrypting data to send to ${requestUrl}`);
@@ -95,21 +96,25 @@ module.exports = {
             return { statusCode, data };
         } else if (headers.username && headers.passphrase) {
             ({ hashedPassphrase, hashedPassphraseSalt } = utils.hashPassphrase(passphrase));
-            let _headers = { username: headers.username, hashedPassphrase, hashedPassphraseSalt, fromhost: headers.fromhost, fromport: headers.fromport };
-            ({ headers: { token, encryptionkey } } = await requestDeferred.send({  host, port, path: "/login", method, headers: _headers, data: "fetching encryptionkey and token" }));
-            headers.token = token;
-            headers.encryptionkey = encryptionkey;
-            logging.write("Sending Secure Request",`creating new session for ${requestUrl}`);
-            session = new SecureSession({ username: headers.username, port, hashedPassphrase: headers.hashedPassphrase, token, hashedPassphraseSalt: headers.hashedPassphraseSalt, fromhost: headers.fromhost, fromport: headers.fromport });
-            module.exports.sessions.push(session);
-            return await module.exports.send({ host, port, path, method, headers, data });
-        } else if (headers.username && headers.hashedPassphrase && headers.hashedPassphraseSalt){
+            headers.hashedPassphrase = hashedPassphrase;
+            headers.hashedPassphraseSalt = hashedPassphraseSalt;
+        }
+        if (headers.username && headers.hashedPassphrase && headers.hashedPassphraseSalt){
             let _headers = { username: headers.username, hashedPassphrase: headers.hashedPassphrase, hashedPassphraseSalt: headers.hashedPassphraseSalt, fromhost: headers.fromhost, fromport: headers.fromport };
             ({ headers: { token, encryptionkey } } = await requestDeferred.send({  host, port, path: "/login", method, headers: _headers, data: "fetching encryptionkey and token" }));
             headers.token = token;
             headers.encryptionkey = encryptionkey;
             logging.write("Sending Secure Request",`creating new session for ${requestUrl}`);
-            session = new SecureSession({ username: headers.username, port, hashedPassphrase: headers.hashedPassphrase, token, hashedPassphraseSalt: headers.hashedPassphraseSalt, fromhost: headers.fromhost, fromport: headers.fromport });
+            session = new SecureSession({ 
+                host, 
+                port,
+                username: headers.username, 
+                hashedPassphrase: headers.hashedPassphrase, 
+                token, 
+                hashedPassphraseSalt: headers.hashedPassphraseSalt, 
+                fromhost: headers.fromhost, 
+                fromport: headers.fromport
+            });
             module.exports.sessions.push(session);
             return await module.exports.send({ host, port, path, method, headers, data });
         }
