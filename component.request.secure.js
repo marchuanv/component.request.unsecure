@@ -77,7 +77,7 @@ module.exports = {
     sessions: [],
     send: async ({ host, port, path, method, headers, data }) => {
         const requestUrl = `${host}:${port}${path}`;
-        let session = module.exports.sessions.find(s => s.token === token && s.port === port);
+        let session = module.exports.sessions.find(s => s.token === headers.token);
         if (session){
             logging.write("Sending Secure Request",`using existing session ${session.id} for ${requestUrl}`);
             logging.write("Sending Secure Request",`encrypting data to send to ${requestUrl}`);
