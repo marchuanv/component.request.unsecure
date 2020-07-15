@@ -1,9 +1,9 @@
 const utils = require("utils");
-const logging = require("logging");
 const crypto = require("crypto");
 const requestDeferred = require("component.request.deferred");
 const base64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/;
 
+const logging = require("logging");
 logging.config.add("Sending Secure Request");
 
 const isBase64String = (str) => {
