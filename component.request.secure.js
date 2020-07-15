@@ -84,7 +84,7 @@ module.exports = {
     sessions: [],
     send: async ({ host, port, path, method, headers, data }) => {
         const requestUrl = `${host}:${port}${path}`;
-        const { username, passphrase, encryptionkey, token, fromhost, fromport } = headers;
+        const { username, passphrase, encryptionkey, token, hashedPassphrase, hashedPassphraseSalt, fromhost, fromport } = headers;
         let session = module.exports.sessions.find(session => session.token === token);
         let encryptData = "";
         if (session){
@@ -95,6 +95,13 @@ module.exports = {
             headers.encryptionkey = session.getEncryptionKey();
         } else if (username && passphrase) {
             const { hashedPassphrase, hashedPassphraseSalt } = utils.hashPassphrase(passphrase);
+            session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token, fromhost, fromport });
+            module.exports.sessions.push(session);
+            encryptData = data;
+            logging.write("Sending Secure Request",`creating new session ${session.id} for ${requestUrl}`);
+            headers.token = session.token;
+            headers.encryptionkey = session.getEncryptionKey();
+        } else if (username && hashedPassphrase && hashedPassphraseSalt){
             session = new SecureSession({ username, hashedPassphrase, hashedPassphraseSalt, token, fromhost, fromport });
             module.exports.sessions.push(session);
             encryptData = data;
