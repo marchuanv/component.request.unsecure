@@ -81,7 +81,7 @@ module.exports = {
         const requestUrl = `${host}:${port}${path}`;
         let session = module.exports.sessions.find(s => s.username === headers.username && s.host === host && s.port === port );
         if (session){
-            logging.write("Sending Secure Request",`using existing session ${session.id} for ${requestUrl}`);
+            logging.write("Sending Secure Request",`using existing session ${requestUrl}`);
             logging.write("Sending Secure Request",`encrypting data to send to ${requestUrl}`);
             const encryptData = session.encryptData({ encryptionkey: session.remoteEncryptionKey, data });
             headers.token = session.token;
@@ -103,7 +103,7 @@ module.exports = {
         }
         if (headers.username && headers.hashedPassphrase && headers.hashedPassphraseSalt){
             let _headers = { username: headers.username, hashedPassphrase: headers.hashedPassphrase, hashedPassphraseSalt: headers.hashedPassphraseSalt, fromhost: headers.fromhost, fromport: headers.fromport };
-            ({ headers: { token, encryptionkey } } = await requestDeferred.send({  host, port, path: "/login", method, headers: _headers, data: "fetching encryptionkey and token" }));
+            ({ headers: { token, encryptionkey }, statusCode } = await requestDeferred.send({  host, port, path: "/login", method, headers: _headers, data: "fetching encryptionkey and token" }));
             logging.write("Sending Secure Request",`creating new session for ${requestUrl}`);
             session = new SecureSession({ 
                 host, 
