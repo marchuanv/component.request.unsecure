@@ -1,48 +1,7 @@
 const utils = require("utils");
-const crypto = require("crypto");
 const requestDeferred = require("component.request.deferred");
-const base64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$/;
-
 const logging = require("logging");
 logging.config.add("Sending Secure Request");
-
-
-const isBase64String = (str) => {
-    base64.lastIndex = 0;
-    return base64.test(str);
-};
-
-const stringToBase64 = (str) => {
-    return Buffer.from(str, "utf8").toString("base64");
-}
-
-const base64ToString = (base64Str) => {
-    return Buffer.from(base64Str, "base64").toString("utf8");;
-}
-
-const encryptToBase64Str = (dataStr, encryptionkey) => {
-    const dataBuf = Buffer.from(dataStr, "utf8");
-    return crypto.publicEncrypt( { 
-        key: encryptionkey,
-        padding: crypto.constants.RSA_PKCS1_PADDING
-    }, dataBuf).toString("base64");
-}
-
-const decryptFromBase64Str = (base64Str, decryptionKey, passphrase) => {
-    const dataBuf = Buffer.from(base64Str, "base64");
-    return crypto.privateDecrypt({ 
-        key: decryptionKey,
-        passphrase,
-        padding: crypto.constants.RSA_PKCS1_PADDING
-    }, dataBuf).toString("utf8");
-}
-
-const generateKeys = (passphrase) => {
-    return crypto.generateKeyPairSync('rsa', { modulusLength: 4096,
-        publicKeyEncoding: { type: 'spki', format: 'pem'},
-        privateKeyEncoding: { type: 'pkcs8', format: 'pem', cipher: 'aes-256-cbc', passphrase }
-    });
-};
 
 function SecureSession({ username, host, port, fromhost, fromport, token, hashedPassphrase, hashedPassphraseSalt, remoteEncryptionKey }) {
     
@@ -55,7 +14,7 @@ function SecureSession({ username, host, port, fromhost, fromport, token, hashed
     this.hashedPassphrase = hashedPassphrase;
     this.hashedPassphraseSalt = hashedPassphraseSalt;
     this.token = token;
-    const { publicKey, privateKey } = generateKeys(hashedPassphrase);
+    const { publicKey, privateKey } = utils.generateKeys(hashedPassphrase);
     this.privateKey = privateKey;
     this.publicKey = publicKey;
     this.remoteEncryptionKey = remoteEncryptionKey;
@@ -65,12 +24,12 @@ function SecureSession({ username, host, port, fromhost, fromport, token, hashed
     };
 
     this.encryptData= ({ encryptionkey, data } ) => {
-        const encryptedData = encryptToBase64Str(data, base64ToString(encryptionkey || "") || this.publicKey );
+        const encryptedData = utils.encryptToBase64Str(data, utils.base64ToString(encryptionkey || "") || this.publicKey );
         return encryptedData;
     };
     
     this.decryptData = ({ data } ) => {
-        const decryptedData = decryptFromBase64Str(data, this.privateKey, hashedPassphrase);
+        const decryptedData = utils.decryptFromBase64Str(data, this.privateKey, hashedPassphrase);
         return decryptedData;
     };
 }

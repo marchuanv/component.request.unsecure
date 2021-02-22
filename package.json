@@ -1,7 +1,7 @@
 {
   "name": "component.request.secure",
   "version": "1.0.0",
-  "description": "",
+  "description": "module for sending secured requests over a network",
   "main": "component.request.secure.js",
   "engines": {
     "node": "12.16.1",
