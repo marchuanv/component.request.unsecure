@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/marchuanv/component.request.unsecure#readme",
   "dependencies": {
-    "component.logging": "marchuanv/component.logging.git",
-    "component.request.deferred": "marchuanv/component.request.deferred.git"
+    "component.logging": "marchuanv/component.logging",
+    "component.request.deferred": "marchuanv/component.request.deferred"
   }
 }
