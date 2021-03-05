@@ -1,4 +1,4 @@
-const logging = require("logging");
+const logging = require("component.logging");
 const requestDeferred = require("component.request.deferred");
 
 module.exports = { 
