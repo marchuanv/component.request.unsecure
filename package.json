@@ -6,8 +6,8 @@
   "description": "module for sending secured requests over a network",
   "main": "component.request.unsecure.js",
   "engines": {
-    "node": "12.16.1",
-    "npm": "6.13.4"
+    "node": "14.12.0",
+    "npm": "6.14.8"
   },
   "scripts": {
     "test": "node test.js"
