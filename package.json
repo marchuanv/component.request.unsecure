@@ -1,6 +1,8 @@
 {
   "name": "component.request.unsecure",
   "version": "1.0.0",
+  "hostname":"localhost",
+  "port": 3000,
   "description": "module for sending secured requests over a network",
   "main": "component.request.unsecure.js",
   "engines": {
