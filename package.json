@@ -29,7 +29,7 @@
     "host":"localhost",
     "port": 3000,
     "channel": 3000,
-    "publishers": [
+    "dependencies": [
       { "moduleName":"component.request.deferred" }
     ]
   }
